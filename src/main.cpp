@@ -6,15 +6,14 @@ using namespace geode::prelude;
 class $modify(MyMenuLayer, MenuLayer) {
 
 	bool init() {
-
 		if (!MenuLayer::init()) return false;
+		
+		GameLevelManager* glm = GameLevelManager::sharedState();
+		glm->downloadLevel(Mod::get()->getSavedValue<int64_t>("levelID1", 73667628), false);
+		glm->downloadLevel(Mod::get()->getSavedValue<int64_t>("levelID2", 83724866), false);
 		
 		auto menu = this->getChildByID("right-side-menu");
 		if (!menu) return true;
-
-		const auto glm = GameLevelManager::sharedState();
-		glm->downloadLevel(Mod::get()->getSettingValue<int64_t>("levelID1"), false);
-		glm->downloadLevel(Mod::get()->getSettingValue<int64_t>("levelID2"), false);
 
 		auto levelButton1 = CCMenuItemSpriteExtra::create(
 			CircleButtonSprite::createWithSpriteFrameName("diffIcon_00_btn_001.png"),
@@ -38,17 +37,28 @@ class $modify(MyMenuLayer, MenuLayer) {
 	}
 
 	void onLevelButton(CCObject*) {
-		GJGameLevel* level = GameLevelManager::sharedState()->getSavedLevel(Mod::get()->getSettingValue<int64_t>("levelID1"));
+		MyMenuLayer::openLevelStepOne(Mod::get()->getSavedValue<int64_t>("levelID1", 73667628));
+	}
+
+	void onLevelButton2(CCObject*) {
+		MyMenuLayer::openLevelStepOne(Mod::get()->getSavedValue<int64_t>("levelID2", 83724866));
+	}
+
+	void openLevelStepOne(const int64_t levelID) {
+		if (levelID < 128) return MyMenuLayer::woahThereBuddy(fmt::format("{} is not a valid level ID.", levelID)); // reject lists and robtop levels
+		MyMenuLayer::openLevel(GameLevelManager::sharedState()->getSavedLevel(levelID), levelID);
+	}
+
+	void openLevel(GJGameLevel* level, const int64_t levelID) {
+		if (!level) return MyMenuLayer::woahThereBuddy(fmt::format("Unable to open level {}. Try downloading it first, then try again. Or check your internet connection.", levelID));
+		if (Mod::get()->getSettingValue<bool>("play-sfx")) FMODAudioEngine::get()->playEffect("playSound_01.ogg");
 		auto playScene = PlayLayer::scene(level, false, false);
 		auto transition = CCTransitionFade::create(0.5f, playScene);
 		CCDirector::sharedDirector()->pushScene(transition);
 	}
 
-	void onLevelButton2(CCObject*) {
-		GJGameLevel* level = GameLevelManager::sharedState()->getSavedLevel(Mod::get()->getSettingValue<int64_t>("levelID2"));
-		auto playScene = PlayLayer::scene(level, false, false);
-		auto transition = CCTransitionFade::create(0.5f, playScene);
-		CCDirector::sharedDirector()->pushScene(transition);
+	void woahThereBuddy(const std::string& reason, const std::string& title = "Uh oh!") {
+		return FLAlertLayer::create(title.c_str(), reason, "OK")->show();
 	}
 };
 
@@ -83,8 +93,8 @@ class $modify(MyInfoLayer, LevelInfoLayer) {
 			"Save this level as primary or secondary menu screen level?\n\n<cy>To cancel, press ESC (PC/Mac) or the Back button on your three-button navigation bar (Android).</c>",
 			"Primary", "Secondary",
 			[levelID](auto, bool secondary) {
-				if (secondary) Mod::get()->setSettingValue("levelID2", levelID);
-				else Mod::get()->setSettingValue("levelID1", levelID);
+				if (secondary) Mod::get()->setSavedValue("levelID2", levelID);
+				else Mod::get()->setSavedValue("levelID1", levelID);
 			}
 		);
 	}
