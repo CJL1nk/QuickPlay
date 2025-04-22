@@ -95,7 +95,7 @@ class $modify(MyInfoLayer, LevelInfoLayer) {
 			[levelID](auto, bool secondary) {
 				if (secondary) Mod::get()->setSavedValue("levelID2", levelID);
 				else Mod::get()->setSavedValue("levelID1", levelID);
-			}
+			}, true, true
 		);
 	}
 };
