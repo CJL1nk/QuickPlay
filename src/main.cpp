@@ -72,13 +72,19 @@ class $modify(MyInfoLayer, LevelInfoLayer) {
 		if (!menu) return true;
 
 		auto btn = CCMenuItemSpriteExtra::create(
-			CircleButtonSprite::createWithSpriteFrameName("diffIcon_auto_btn_001.png"), 
+			CircleButtonSprite::createWithSpriteFrameName("diffIcon_00_btn_001.png"), 
 			this, menu_selector(MyInfoLayer::onSaveLevelButton)
+		);
+		auto btn2 = CCMenuItemSpriteExtra::create(
+			CircleButtonSprite::createWithSpriteFrameName("diffIcon_auto_btn_001.png"), 
+			this, menu_selector(MyInfoLayer::onSaveLevelButton2)
 		);
 
 		btn->setID("save-level-btn"_spr);
+		btn2->setID("save-level-btn-2"_spr);
 		
 		menu->addChild(btn);
+		menu->addChild(btn2);
 		menu->updateLayout();
 
 		return true;
@@ -86,16 +92,28 @@ class $modify(MyInfoLayer, LevelInfoLayer) {
 
 	// Saves the levels ID to the settings value
 	// note from raydeeux: maybe use flalertlayer inheritance for this?
+
 	void onSaveLevelButton(CCObject*) {
 		int64_t levelID = this->m_level->m_levelID;
 		geode::createQuickPopup(
 			"Save Level",
-			"Save this level as primary or secondary menu screen level?\n\n<cy>To cancel, press ESC (PC/Mac) or the Back button on your three-button navigation bar (Android).</c>",
-			"Primary", "Secondary",
-			[levelID](auto, bool secondary) {
-				if (secondary) Mod::get()->setSavedValue("levelID2", levelID);
-				else Mod::get()->setSavedValue("levelID1", levelID);
-			}, true, true
+			"Save this level as the primary menu screen level?",
+			"No", "Yes",
+			[levelID](auto, bool btn2) {
+				if (btn2) Mod::get()->setSavedValue<int64_t>("levelID1", levelID);
+			}
+		);
+	}
+
+	void onSaveLevelButton2(CCObject*) {
+		int64_t levelID = this->m_level->m_levelID;
+		geode::createQuickPopup(
+			"Save Level",
+			"Save this level as the secondary menu screen level?",
+			"No", "Yes",
+			[levelID](auto, bool btn2) {
+				if (btn2) Mod::get()->setSavedValue<int64_t>("levelID2", levelID);
+			}
 		);
 	}
 };
